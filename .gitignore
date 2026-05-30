@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+
+# Environment & secrets (never commit)
+.env
+.env.*
+!.env.example
+frontend/.env.local
+backend/.env
+
+# Next.js (frontend)
+frontend/.next/
+frontend/out/
+frontend/.vercel
+
+# Backend build output
+backend/dist/
+
+# Testing & coverage
+coverage/
+*.lcov
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.swo
+
+# Supabase local CLI
+.supabase/
+backend/.supabase/
+
+# Misc
+*.pem
+*.log
+.turbo
+.cache
+
+# Optional: lockfile policy — we commit package-lock.json for reproducible installs
