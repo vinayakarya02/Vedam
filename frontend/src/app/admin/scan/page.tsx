@@ -1,8 +1,15 @@
+"use client";
+
 import dynamic from "next/dynamic";
 
 const QRScanner = dynamic(
   () => import("@/features/admin/qr-scanner").then((m) => m.QRScanner),
-  { ssr: false, loading: () => <div className="text-muted-foreground">Loading scanner...</div> }
+  {
+    ssr: false,
+    loading: () => (
+      <div className="text-muted-foreground">Loading scanner...</div>
+    ),
+  }
 );
 
 export default function ScanPage() {

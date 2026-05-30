@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Github, Linkedin, Twitter, Mail } from "lucide-react";
+import { Linkedin, Twitter, Mail } from "lucide-react";
 
 const footerLinks = {
   Events: [
