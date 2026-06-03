@@ -185,8 +185,18 @@ export function EventsManagement({ initialEvents }: EventsManagementProps) {
           </table>
         </div>
         {filtered.length === 0 && (
-          <div className="p-12 text-center text-muted-foreground">
-            No events found
+          <div className="p-12 text-center">
+            <p className="text-muted-foreground mb-4">
+              {search ? "No events match your search" : "No events yet"}
+            </p>
+            {!search && (
+              <Button asChild>
+                <Link href="/admin/events/new">
+                  <Plus className="h-4 w-4" />
+                  Create your first event
+                </Link>
+              </Button>
+            )}
           </div>
         )}
       </div>

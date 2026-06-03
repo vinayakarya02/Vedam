@@ -20,10 +20,20 @@ import { createClient } from "@/lib/supabase/client";
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/events", label: "Events", icon: Calendar },
-  { href: "/admin/events/new", label: "Create Event", icon: Plus },
   { href: "/admin/registrations", label: "Registrations", icon: Users },
   { href: "/admin/scan", label: "QR Scanner", icon: QrCode },
 ];
+
+function isNavActive(pathname: string, href: string) {
+  if (href === "/admin") return pathname === "/admin";
+  if (href === "/admin/events") {
+    return (
+      pathname === "/admin/events" ||
+      /^\/admin\/events\/[^/]+\/edit$/.test(pathname)
+    );
+  }
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
 
 export function AdminSidebar() {
   const pathname = usePathname();
@@ -52,11 +62,18 @@ export function AdminSidebar() {
         </Link>
       </div>
 
+      <div className="px-4 pt-4">
+        <Button asChild className="w-full">
+          <Link href="/admin/events/new" onClick={() => setMobileOpen(false)}>
+            <Plus className="h-4 w-4" />
+            Create Event
+          </Link>
+        </Button>
+      </div>
+
       <nav className="flex-1 p-4 space-y-1">
         {navItems.map((item) => {
-          const isActive =
-            pathname === item.href ||
-            (item.href !== "/admin" && pathname.startsWith(item.href));
+          const isActive = isNavActive(pathname, item.href);
           return (
             <Link
               key={item.href}

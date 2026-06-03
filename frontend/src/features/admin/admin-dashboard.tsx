@@ -14,7 +14,9 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import { Calendar, Users, TrendingUp, MessageCircle, QrCode } from "lucide-react";
+import Link from "next/link";
+import { Calendar, Users, TrendingUp, MessageCircle, QrCode, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { DashboardStats } from "@/types/database";
 
@@ -43,11 +45,19 @@ export function AdminDashboard({
 }: AdminDashboardProps) {
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground text-sm">
-          Overview of your event platform
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <p className="text-muted-foreground text-sm">
+            Overview of your event platform
+          </p>
+        </div>
+        <Button asChild>
+          <Link href="/admin/events/new">
+            <Plus className="h-4 w-4" />
+            Create Event
+          </Link>
+        </Button>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">

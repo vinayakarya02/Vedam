@@ -6,6 +6,7 @@ const footerLinks = {
     { href: "/events", label: "All Events" },
     { href: "/events?filter=upcoming", label: "Upcoming" },
     { href: "/events?filter=past", label: "Past Events" },
+    { href: "/admin", label: "Admin" },
   ],
   Vedam: [
     { href: "https://vedam.org", label: "About Vedam" },
