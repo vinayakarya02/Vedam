@@ -11,7 +11,6 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { formatDate, formatTime } from "@/lib/utils";
 import { getApiUrl } from "@/lib/api";
 
 interface RegistrationData {
@@ -108,47 +107,16 @@ export function RegistrationSuccess() {
         Registration Successful
       </p>
       <p className="text-muted-foreground mb-6">
-        You&apos;re registered for <strong>{event.title}</strong>
+        Your seat for <strong>{event.title}</strong> is confirmed.
       </p>
 
       <div className="glass rounded-xl p-4 mb-6 text-left space-y-3 text-sm">
-        <p className="font-semibold text-foreground">
-          Thank You for Registering!
-        </p>
-        <p className="text-muted-foreground">
-          Your seat for <strong>{event.title}</strong> is confirmed.
-        </p>
         <p className="text-muted-foreground">
           Join our WhatsApp Community to receive bootcamp updates, session
           reminders, resources, future event announcements, and valuable
           insights on B.Tech in CS (AI).
         </p>
         <p className="text-muted-foreground">See you at the bootcamp!</p>
-      </div>
-
-      <div className="glass rounded-xl p-4 mb-6 text-left space-y-2 text-sm">
-        <h3 className="font-semibold text-vedam-orange text-xs uppercase tracking-wide mb-3">
-          Your registration details
-        </h3>
-        <DetailRow label="Name" value={data.name} />
-        <DetailRow label="Email" value={data.email} />
-        <DetailRow label="Phone" value={data.phone} />
-        <DetailRow
-          label="12th passout year"
-          value={data.passout_year_12th || "—"}
-        />
-        <DetailRow label="Stream of 12th" value={data.stream_12th || "—"} />
-        <DetailRow
-          label="Registered on"
-          value={`${formatDate(data.created_at, {
-            weekday: "short",
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          })} at ${formatTime(data.created_at)}`}
-        />
-        <DetailRow label="Attendee ID" value={data.attendee_id} mono />
-        <DetailRow label="Status" value={data.status} highlight />
       </div>
 
       <div className="space-y-3">
@@ -176,28 +144,5 @@ export function RegistrationSuccess() {
         </Button>
       </div>
     </motion.div>
-  );
-}
-
-function DetailRow({
-  label,
-  value,
-  mono,
-  highlight,
-}: {
-  label: string;
-  value: string;
-  mono?: boolean;
-  highlight?: boolean;
-}) {
-  return (
-    <div className="flex justify-between gap-4">
-      <span className="text-muted-foreground shrink-0">{label}</span>
-      <span
-        className={`text-right ${mono ? "font-mono text-vedam-orange text-xs" : ""} ${highlight ? "capitalize text-green-400" : ""}`}
-      >
-        {value}
-      </span>
-    </div>
   );
 }
