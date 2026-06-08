@@ -7,10 +7,11 @@ import {
   Plus,
   Edit,
   Trash2,
-  Copy,
+  CopyPlus,
   Eye,
   EyeOff,
   ExternalLink,
+  Share2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import type { Event } from "@/types/database";
 import { formatDate } from "@/lib/utils";
 import { clientApiFetch } from "@/lib/api-client";
+import { EventShareDialog } from "@/features/admin/event-share-dialog";
 
 interface EventsManagementProps {
   initialEvents: Event[];
@@ -26,6 +28,7 @@ interface EventsManagementProps {
 export function EventsManagement({ initialEvents }: EventsManagementProps) {
   const [events, setEvents] = useState(initialEvents);
   const [search, setSearch] = useState("");
+  const [shareEvent, setShareEvent] = useState<Event | null>(null);
   const router = useRouter();
 
   const filtered = events.filter(
@@ -71,6 +74,12 @@ export function EventsManagement({ initialEvents }: EventsManagementProps) {
 
   return (
     <div>
+      {shareEvent && (
+        <EventShareDialog
+          event={shareEvent}
+          onClose={() => setShareEvent(null)}
+        />
+      )}
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <Input
           placeholder="Search events..."
@@ -136,11 +145,20 @@ export function EventsManagement({ initialEvents }: EventsManagementProps) {
                   </td>
                   <td className="p-4">
                     <div className="flex items-center justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Share registration link"
+                        onClick={() => setShareEvent(event)}
+                      >
+                        <Share2 className="h-4 w-4" />
+                      </Button>
                       {event.status === "published" && (
                         <Button variant="ghost" size="icon" asChild>
                           <Link
                             href={`/events/${event.slug}`}
                             target="_blank"
+                            title="Open event page"
                           >
                             <ExternalLink className="h-4 w-4" />
                           </Link>
@@ -167,8 +185,9 @@ export function EventsManagement({ initialEvents }: EventsManagementProps) {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleDuplicate(event.id)}
+                        title="Duplicate event"
                       >
-                        <Copy className="h-4 w-4" />
+                        <CopyPlus className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"

@@ -10,6 +10,7 @@ import { isEventPast } from "@/lib/utils";
 
 interface EventsListingProps {
   events: Event[];
+  typeLabels?: Record<string, string>;
   initialFilter?: string;
   initialType?: string;
   initialSearch?: string;
@@ -24,6 +25,7 @@ const filters = [
 
 export function EventsListing({
   events,
+  typeLabels,
   initialFilter = "all",
   initialType,
   initialSearch = "",
@@ -96,7 +98,7 @@ export function EventsListing({
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map((event, i) => (
-            <EventCard key={event.id} event={event} index={i} />
+            <EventCard key={event.id} event={event} index={i} typeLabels={typeLabels} />
           ))}
         </div>
       )}

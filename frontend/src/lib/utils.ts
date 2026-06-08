@@ -59,20 +59,27 @@ export function slugify(text: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-export function getEventTypeLabel(type: string): string {
-  const labels: Record<string, string> = {
-    workshop: "Workshop",
-    webinar: "Webinar",
-    hackathon: "Hackathon",
-    bootcamp: "Bootcamp",
-    masterclass: "Masterclass",
-    meetup: "Meetup",
-    "career-session": "Career Session",
-    "demo-day": "Demo Day",
-    "founder-talk": "Founder Talk",
-    "campus-event": "Campus Event",
-  };
-  return labels[type] || type;
+const DEFAULT_EVENT_TYPE_LABELS: Record<string, string> = {
+  webinar: "Webinar",
+  bootcamp: "Bootcamp",
+  masterclass: "Masterclass",
+  meetup: "Seek your Seniors",
+  "founder-talk": "Founder Talk",
+  "campus-event": "Campus Event",
+};
+
+export function getEventTypeLabel(
+  type: string,
+  labels?: Record<string, string>
+): string {
+  const merged = { ...DEFAULT_EVENT_TYPE_LABELS, ...labels };
+  return merged[type] || type;
+}
+
+export function eventTypesToLabelMap(
+  types: { slug: string; label: string }[]
+): Record<string, string> {
+  return Object.fromEntries(types.map((t) => [t.slug, t.label]));
 }
 
 export function getModeLabel(mode: string): string {

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Linkedin, Twitter, Mail } from "lucide-react";
+import { VedamLogo } from "@/components/shared/vedam-logo";
 
 const footerLinks = {
   Events: [
@@ -26,15 +27,10 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
           <div className="md:col-span-1">
-            <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-vedam-orange to-vedam-purple">
-                <span className="font-bold text-white">V</span>
-              </div>
-              <div>
-                <div className="font-semibold">Vedam Events</div>
-                <div className="text-xs text-muted-foreground">School of Technology</div>
-              </div>
+            <Link href="/" className="inline-block mb-4">
+              <VedamLogo size="lg" />
             </Link>
+            <p className="text-xs text-muted-foreground mb-4">School of Technology</p>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Learn tech by building it. Premium events for builders, founders, and AI enthusiasts.
             </p>

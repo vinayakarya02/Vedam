@@ -7,7 +7,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "db:migrate": "echo Run supabase/migrations/001_initial_schema.sql in Supabase SQL Editor",
+    "db:migrate": "echo Run backend/supabase/migrations/*.sql in Supabase SQL Editor (001-004)",
     "db:seed": "echo Run supabase/seed.sql in Supabase SQL Editor"
   },
   "dependencies": {

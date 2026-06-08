@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import {
@@ -26,6 +27,7 @@ import {
 
 interface DynamicEventPageProps {
   event: Event;
+  typeLabels?: Record<string, string>;
 }
 
 const DEFAULT_SECTIONS: PageSection[] = [
@@ -39,7 +41,7 @@ const DEFAULT_SECTIONS: PageSection[] = [
   { id: "registration", type: "registration", enabled: true, order: 7 },
 ];
 
-export function DynamicEventPage({ event }: DynamicEventPageProps) {
+export function DynamicEventPage({ event, typeLabels }: DynamicEventPageProps) {
   const sections =
   event.page_config?.length > 0
     ? [...event.page_config].sort((a, b) => a.order - b.order).filter((s) => s.enabled)
@@ -50,7 +52,14 @@ export function DynamicEventPage({ event }: DynamicEventPageProps) {
   const renderSection = (section: PageSection) => {
     switch (section.type) {
       case "hero":
-        return <HeroSection key={section.id} event={event} seatsLeft={seatsLeft} />;
+        return (
+          <HeroSection
+            key={section.id}
+            event={event}
+            seatsLeft={seatsLeft}
+            typeLabels={typeLabels}
+          />
+        );
       case "about":
         return <AboutSection key={section.id} event={event} />;
       case "speakers":
@@ -87,7 +96,15 @@ export function DynamicEventPage({ event }: DynamicEventPageProps) {
   );
 }
 
-function HeroSection({ event, seatsLeft }: { event: Event; seatsLeft: number }) {
+function HeroSection({
+  event,
+  seatsLeft,
+  typeLabels,
+}: {
+  event: Event;
+  seatsLeft: number;
+  typeLabels?: Record<string, string>;
+}) {
   return (
     <section className="relative min-h-[70vh] flex items-end">
       <div className="absolute inset-0">
@@ -110,7 +127,7 @@ function HeroSection({ event, seatsLeft }: { event: Event; seatsLeft: number }) 
           transition={{ duration: 0.6 }}
         >
           <div className="flex flex-wrap gap-2 mb-6">
-            <Badge>{getEventTypeLabel(event.event_type)}</Badge>
+            <Badge>{getEventTypeLabel(event.event_type, typeLabels)}</Badge>
             <Badge variant="secondary">{getModeLabel(event.mode)}</Badge>
             {event.is_featured && <Badge variant="purple">Featured</Badge>}
           </div>
@@ -384,7 +401,15 @@ function RegistrationSection({ event }: { event: Event }) {
           subtitle={`Join ${event.title} — limited seats available`}
         />
         <div className="glass-card p-8">
-          <RegistrationForm event={event} />
+          <Suspense
+            fallback={
+              <div className="py-8 text-center text-muted-foreground">
+                Loading form...
+              </div>
+            }
+          >
+            <RegistrationForm event={event} />
+          </Suspense>
         </div>
       </div>
     </section>

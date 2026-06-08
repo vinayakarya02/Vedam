@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,18 +14,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageBuilder } from "@/features/admin/page-builder";
-import type { Event, PageSection } from "@/types/database";
+import { BannerUpload } from "@/features/admin/banner-upload";
+import { RegistrationFormBuilder } from "@/features/admin/registration-form-builder";
+import { EventShareDialog } from "@/features/admin/event-share-dialog";
+import type { Event, EventType, PageSection, RegistrationFormField } from "@/types/database";
 import { slugify } from "@/lib/utils";
 import { clientApiFetch } from "@/lib/api-client";
+import { getEventFormFields } from "@/lib/registration-fields";
+import { buildEventRegistrationUrl } from "@/lib/utm";
+import { getAppUrl } from "@/lib/api";
+import { EVENT_TYPES } from "@/lib/constants";
 
 interface EventFormProps {
   event?: Event;
 }
-
-const EVENT_TYPES = [
-  "workshop", "webinar", "hackathon", "bootcamp", "masterclass",
-  "meetup", "career-session", "demo-day", "founder-talk", "campus-event",
-];
 
 const DEFAULT_PAGE_CONFIG: PageSection[] = [
   { id: "hero", type: "hero", enabled: true, order: 0 },
@@ -41,7 +43,18 @@ const DEFAULT_PAGE_CONFIG: PageSection[] = [
 export function EventForm({ event }: EventFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"details" | "content" | "builder">("details");
+  const [shareEvent, setShareEvent] = useState<Event | null>(null);
+  const [activeTab, setActiveTab] = useState<
+    "details" | "content" | "registration" | "builder"
+  >("details");
+  const [eventTypes, setEventTypes] = useState<EventType[]>([]);
+
+  useEffect(() => {
+    clientApiFetch("/api/admin/event-types")
+      .then((res) => res.json())
+      .then((data) => setEventTypes(data.eventTypes || []))
+      .catch(() => setEventTypes([]));
+  }, []);
 
   const [form, setForm] = useState({
     title: event?.title || "",
@@ -50,7 +63,7 @@ export function EventForm({ event }: EventFormProps) {
     tagline: event?.tagline || "",
     description: event?.description || "",
     banner_url: event?.banner_url || "",
-    event_type: event?.event_type || "workshop",
+    event_type: event?.event_type || "webinar",
     mode: event?.mode || "online",
     venue: event?.venue || "",
     start_date: event?.start_date
@@ -62,7 +75,9 @@ export function EventForm({ event }: EventFormProps) {
     seats: event?.seats || 100,
     duration_minutes: event?.duration_minutes || 120,
     whatsapp_community_link: event?.whatsapp_community_link || "",
-    whatsapp_group_link: event?.whatsapp_group_link || "",
+    utm_source: event?.utm_source || "vedam-events",
+    utm_medium: event?.utm_medium || "web",
+    utm_campaign: event?.utm_campaign || event?.slug || "",
     is_featured: event?.is_featured || false,
     status: event?.status || "draft",
     meta_title: event?.meta_title || "",
@@ -77,7 +92,32 @@ export function EventForm({ event }: EventFormProps) {
     page_config: event?.page_config?.length
       ? event.page_config
       : DEFAULT_PAGE_CONFIG,
+    registration_form_fields: getEventFormFields(
+      event?.registration_form_fields
+    ),
   });
+
+  const trackingLink =
+    form.slug.trim() &&
+    buildEventRegistrationUrl(getAppUrl(), form.slug, {
+      utm_source: form.utm_source,
+      utm_medium: form.utm_medium,
+      utm_campaign: form.utm_campaign || form.slug,
+    });
+
+  const typeOptions =
+    eventTypes.filter((t) => t.is_active).length > 0
+      ? eventTypes.filter((t) => t.is_active)
+      : EVENT_TYPES.map((t) => ({
+          id: t.value,
+          slug: t.value,
+          label: t.label,
+          is_active: true,
+          sort_order: 0,
+          description: null,
+          created_at: "",
+          updated_at: "",
+        }));
 
   const update = (key: string, value: unknown) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -93,8 +133,17 @@ export function EventForm({ event }: EventFormProps) {
     setLoading(true);
 
     try {
+      if (!form.banner_url) {
+        alert("Please upload an event banner");
+        setLoading(false);
+        return;
+      }
+
       const payload = {
         ...form,
+        whatsapp_group_link: null,
+        registration_form_fields: form.registration_form_fields,
+        utm_campaign: form.utm_campaign || form.slug,
         seats: Number(form.seats),
         duration_minutes: Number(form.duration_minutes),
         is_featured: form.is_featured,
@@ -118,15 +167,42 @@ export function EventForm({ event }: EventFormProps) {
       const method = event ? "PUT" : "POST";
       const body = event ? { id: event.id, ...payload } : payload;
 
-      const res = await clientApiFetch("/api/admin/events", {
-        method,
-        body: JSON.stringify(body),
-      });
+      if (!form.start_date) {
+        alert("Please set a start date and time");
+        setLoading(false);
+        return;
+      }
 
-      if (!res.ok) throw new Error("Failed to save");
+      if (!form.slug.trim()) {
+        alert("Please set an event slug");
+        setLoading(false);
+        return;
+      }
 
-      router.push("/admin/events");
-      router.refresh();
+      let res: Response;
+      try {
+        res = await clientApiFetch("/api/admin/events", {
+          method,
+          body: JSON.stringify(body),
+        });
+      } catch {
+        throw new Error(
+          "Cannot reach the API. Run `npm run dev` from the project root (backend + frontend), then try again."
+        );
+      }
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(
+          typeof data.error === "string" ? data.error : "Failed to save event"
+        );
+      }
+
+      const saved = data.event as Event | undefined;
+      if (!saved) throw new Error("Invalid response from server");
+
+      setShareEvent(saved);
     } catch (err) {
       alert(err instanceof Error ? err.message : "Save failed");
     } finally {
@@ -137,10 +213,22 @@ export function EventForm({ event }: EventFormProps) {
   const tabs = [
     { id: "details", label: "Event Details" },
     { id: "content", label: "Content" },
+    { id: "registration", label: "Registration" },
     { id: "builder", label: "Page Builder" },
   ] as const;
 
   return (
+    <>
+      {shareEvent && (
+        <EventShareDialog
+          event={shareEvent}
+          onClose={() => {
+            setShareEvent(null);
+            router.push("/admin/events");
+            router.refresh();
+          }}
+        />
+      )}
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="flex gap-2 border-b border-white/5 pb-4">
         {tabs.map((tab) => (
@@ -189,13 +277,18 @@ export function EventForm({ event }: EventFormProps) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {EVENT_TYPES.map((t) => (
-                      <SelectItem key={t} value={t}>
-                        {t}
+                    {typeOptions.map((t) => (
+                      <SelectItem key={t.slug} value={t.slug}>
+                        {t.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                <p className="text-xs text-muted-foreground">
+                  <a href="/admin/event-types" className="text-vedam-orange hover:underline">
+                    Manage event types
+                  </a>
+                </p>
               </div>
             </div>
           </div>
@@ -224,14 +317,10 @@ export function EventForm({ event }: EventFormProps) {
             />
           </div>
 
-          <div className="space-y-2">
-            <Label>Banner URL</Label>
-            <Input
-              value={form.banner_url}
-              onChange={(e) => update("banner_url", e.target.value)}
-              placeholder="https://..."
-            />
-          </div>
+          <BannerUpload
+            value={form.banner_url}
+            onChange={(url) => update("banner_url", url)}
+          />
           <div className="space-y-2">
             <Label>Mode</Label>
             <Select
@@ -299,13 +388,50 @@ export function EventForm({ event }: EventFormProps) {
             </p>
           </div>
 
-          <div className="space-y-2 md:col-span-2">
-            <Label>WhatsApp Group Link (Optional)</Label>
-            <Input
-              value={form.whatsapp_group_link}
-              onChange={(e) => update("whatsapp_group_link", e.target.value)}
-              placeholder="https://chat.whatsapp.com/..."
-            />
+          <div className="space-y-2 md:col-span-2 border-t border-white/5 pt-6">
+            <Label className="text-vedam-orange">UTM tracking (per registrant)</Label>
+            <p className="text-xs text-muted-foreground mb-4">
+              Each registration is tagged with these UTM values. Share the tracking link below; every user gets a unique utm_content (attendee ID).
+            </p>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <Label>UTM Source</Label>
+                <Input
+                  value={form.utm_source}
+                  onChange={(e) => update("utm_source", e.target.value)}
+                  placeholder="instagram"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>UTM Medium</Label>
+                <Input
+                  value={form.utm_medium}
+                  onChange={(e) => update("utm_medium", e.target.value)}
+                  placeholder="social"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>UTM Campaign</Label>
+                <Input
+                  value={form.utm_campaign}
+                  onChange={(e) => update("utm_campaign", e.target.value)}
+                  placeholder={form.slug || "event-slug"}
+                />
+              </div>
+            </div>
+            {trackingLink && (
+              <div className="mt-4 p-3 rounded-lg bg-white/5 text-xs break-all">
+                <span className="text-muted-foreground">Tracking link: </span>
+                <a
+                  href={trackingLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-vedam-orange hover:underline"
+                >
+                  {trackingLink}
+                </a>
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -402,6 +528,13 @@ export function EventForm({ event }: EventFormProps) {
         </div>
       )}
 
+      {activeTab === "registration" && (
+        <RegistrationFormBuilder
+          fields={form.registration_form_fields}
+          onChange={(fields) => update("registration_form_fields", fields)}
+        />
+      )}
+
       {activeTab === "builder" && (
         <PageBuilder
           sections={form.page_config}
@@ -422,5 +555,6 @@ export function EventForm({ event }: EventFormProps) {
         </Button>
       </div>
     </form>
+    </>
   );
 }

@@ -2,12 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   CheckCircle,
-  Download,
   Calendar,
   MessageCircle,
   ExternalLink,
@@ -20,8 +18,12 @@ interface RegistrationData {
   attendee_id: string;
   name: string;
   email: string;
-  qr_code: string;
+  phone: string;
+  passout_year_12th: string | null;
+  stream_12th: string | null;
+  qr_code: string | null;
   status: string;
+  created_at: string;
   events: {
     title: string;
     slug: string;
@@ -101,50 +103,38 @@ export function RegistrationSuccess() {
         </div>
       </div>
 
-      <h1 className="text-2xl font-bold mb-2">Registration Successful!</h1>
+      <h1 className="text-3xl sm:text-4xl font-bold mb-2">Thank You!</h1>
+      <p className="text-lg font-semibold text-vedam-orange mb-1">
+        Registration Successful
+      </p>
       <p className="text-muted-foreground mb-6">
         You&apos;re registered for <strong>{event.title}</strong>
       </p>
 
       <div className="glass rounded-xl p-4 mb-6 text-left space-y-2 text-sm">
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Attendee ID</span>
-          <span className="font-mono text-vedam-orange">{data.attendee_id}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Date</span>
-          <span>{formatDate(event.start_date)}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Time</span>
-          <span>{formatTime(event.start_date)}</span>
-        </div>
-        {event.venue && (
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Venue</span>
-            <span>{event.venue}</span>
-          </div>
-        )}
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Status</span>
-          <span className="capitalize text-green-400">{data.status}</span>
-        </div>
+        <h3 className="font-semibold text-vedam-orange text-xs uppercase tracking-wide mb-3">
+          Your registration details
+        </h3>
+        <DetailRow label="Name" value={data.name} />
+        <DetailRow label="Email" value={data.email} />
+        <DetailRow label="Phone" value={data.phone} />
+        <DetailRow
+          label="12th passout year"
+          value={data.passout_year_12th || "—"}
+        />
+        <DetailRow label="Stream of 12th" value={data.stream_12th || "—"} />
+        <DetailRow
+          label="Registered on"
+          value={`${formatDate(data.created_at, {
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })} at ${formatTime(data.created_at)}`}
+        />
+        <DetailRow label="Attendee ID" value={data.attendee_id} mono />
+        <DetailRow label="Status" value={data.status} highlight />
       </div>
-
-      {data.qr_code && (
-        <div className="mb-6">
-          <Image
-            src={data.qr_code}
-            alt="QR Ticket"
-            width={200}
-            height={200}
-            className="mx-auto rounded-xl"
-          />
-          <p className="text-xs text-muted-foreground mt-2">
-            Show this QR at check-in
-          </p>
-        </div>
-      )}
 
       <div className="space-y-3">
         {whatsappLink && (
@@ -152,15 +142,6 @@ export function RegistrationSuccess() {
             <MessageCircle className="h-5 w-5" />
             Join WhatsApp Community
             <ExternalLink className="h-4 w-4 ml-1" />
-          </Button>
-        )}
-
-        {data.qr_code && (
-          <Button variant="outline" className="w-full" asChild>
-            <a href={data.qr_code} download={`ticket-${data.attendee_id}.png`}>
-              <Download className="h-4 w-4" />
-              Download Ticket
-            </a>
           </Button>
         )}
 
@@ -180,5 +161,28 @@ export function RegistrationSuccess() {
         </Button>
       </div>
     </motion.div>
+  );
+}
+
+function DetailRow({
+  label,
+  value,
+  mono,
+  highlight,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+  highlight?: boolean;
+}) {
+  return (
+    <div className="flex justify-between gap-4">
+      <span className="text-muted-foreground shrink-0">{label}</span>
+      <span
+        className={`text-right ${mono ? "font-mono text-vedam-orange text-xs" : ""} ${highlight ? "capitalize text-green-400" : ""}`}
+      >
+        {value}
+      </span>
+    </div>
   );
 }

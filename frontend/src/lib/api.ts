@@ -1,11 +1,21 @@
-import type { Event } from "@/types/database";
+import type { Event, EventType } from "@/types/database";
 
 export function getApiUrl(): string {
-  const url = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-  return url.replace(/\/$/, "");
+  const url = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000").replace(
+    /\/$/,
+    ""
+  );
+  // Browser: use same-origin /api/* (Next.js rewrite → backend). Avoids CORS.
+  if (typeof window !== "undefined") {
+    return "";
+  }
+  return url;
 }
 
 export function getAppUrl(): string {
+  if (typeof window !== "undefined") {
+    return window.location.origin;
+  }
   const url = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   return url.replace(/\/$/, "");
 }
@@ -44,6 +54,17 @@ export async function getPublishedEvents(filters?: {
       `/api/events${q ? `?${q}` : ""}`
     );
     return events;
+  } catch {
+    return [];
+  }
+}
+
+export async function getEventTypes(): Promise<EventType[]> {
+  try {
+    const { eventTypes } = await serverFetch<{ eventTypes: EventType[] }>(
+      "/api/event-types"
+    );
+    return eventTypes;
   } catch {
     return [];
   }

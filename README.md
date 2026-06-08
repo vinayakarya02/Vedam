@@ -18,7 +18,11 @@ Vedam/
 cp frontend/.env.example frontend/.env.local
 cp backend/.env.example backend/.env
 
-# 2. Supabase: run backend/supabase/migrations/001_initial_schema.sql
+# 2. Supabase: run migrations in order
+#    backend/supabase/migrations/001_initial_schema.sql
+#    backend/supabase/migrations/002_event_types_and_registration_fields.sql
+#    backend/supabase/migrations/003_update_event_types.sql
+#    backend/supabase/migrations/004_banner_utm_registration_fields.sql
 
 # 3. Install & run (from root)
 npm install

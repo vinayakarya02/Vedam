@@ -4,6 +4,7 @@ import { getAppUrl } from "@/lib/api";
 import "./globals.css";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { PublicOnly } from "@/components/layout/public-only";
 import { AnimatedBackground } from "@/components/shared/animated-background";
 
 const geistSans = Geist({
@@ -50,6 +51,10 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  icons: {
+    icon: "/vedam-logo.webp",
+    apple: "/vedam-logo.webp",
+  },
 };
 
 export default function RootLayout({
@@ -63,9 +68,13 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
       >
         <AnimatedBackground />
-        <Header />
+        <PublicOnly>
+          <Header />
+        </PublicOnly>
         <main className="min-h-screen">{children}</main>
-        <Footer />
+        <PublicOnly>
+          <Footer />
+        </PublicOnly>
       </body>
     </html>
   );

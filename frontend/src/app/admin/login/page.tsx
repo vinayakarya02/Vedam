@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { VedamLogo } from "@/components/shared/vedam-logo";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
@@ -39,8 +40,8 @@ export default function AdminLoginPage() {
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md glass-card p-8">
         <div className="text-center mb-8">
-          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-vedam-orange to-vedam-purple flex items-center justify-center mx-auto mb-4">
-            <span className="font-bold text-white text-lg">V</span>
+          <div className="flex justify-center mb-4">
+            <VedamLogo size="xl" priority />
           </div>
           <h1 className="text-2xl font-bold">Admin Login</h1>
           <p className="text-sm text-muted-foreground mt-1">

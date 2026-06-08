@@ -11,15 +11,18 @@ import {
   Menu,
   X,
   Plus,
+  Tags,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { VedamLogo } from "@/components/shared/vedam-logo";
 import { createClient } from "@/lib/supabase/client";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/events", label: "Events", icon: Calendar },
+  { href: "/admin/event-types", label: "Event Types", icon: Tags },
   { href: "/admin/registrations", label: "Registrations", icon: Users },
   { href: "/admin/scan", label: "QR Scanner", icon: QrCode },
 ];
@@ -29,8 +32,12 @@ function isNavActive(pathname: string, href: string) {
   if (href === "/admin/events") {
     return (
       pathname === "/admin/events" ||
+      pathname === "/admin/events/new" ||
       /^\/admin\/events\/[^/]+\/edit$/.test(pathname)
     );
+  }
+  if (href === "/admin/event-types") {
+    return pathname === "/admin/event-types";
   }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
@@ -50,15 +57,18 @@ export function AdminSidebar() {
 
   const NavContent = () => (
     <>
-      <div className="p-6 border-b border-white/5">
-        <Link href="/admin" className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-vedam-orange to-vedam-purple flex items-center justify-center">
-            <span className="text-sm font-bold text-white">V</span>
-          </div>
-          <div>
-            <div className="font-semibold text-sm">Vedam Admin</div>
-            <div className="text-xs text-muted-foreground">Events Platform</div>
-          </div>
+      <div className="shrink-0 border-b border-white/5 p-5 lg:p-6">
+        <Link
+          href="/admin"
+          className="flex items-center gap-3 lg:items-start"
+        >
+          <VedamLogo
+            size="sm"
+            className="hidden shrink-0 lg:inline-flex !py-1"
+          />
+          <span className="text-xs text-muted-foreground leading-snug lg:pt-1.5">
+            Events Platform
+          </span>
         </Link>
       </div>
 
@@ -109,7 +119,7 @@ export function AdminSidebar() {
   return (
     <>
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-4 glass">
-        <span className="font-semibold text-sm">Vedam Admin</span>
+        <VedamLogo size="sm" />
         <button onClick={() => setMobileOpen(!mobileOpen)}>
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
@@ -124,7 +134,8 @@ export function AdminSidebar() {
 
       <aside
         className={cn(
-          "fixed top-0 left-0 z-40 h-full w-64 bg-[#0a0a0a] border-r border-white/5 flex flex-col transition-transform lg:translate-x-0",
+          "fixed top-0 left-0 z-40 flex h-full w-64 flex-col border-r border-white/5 bg-[#0a0a0a] transition-transform lg:translate-x-0",
+          "pt-[4.75rem] lg:pt-0",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >

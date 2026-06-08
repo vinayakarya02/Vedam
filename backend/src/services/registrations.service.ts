@@ -1,9 +1,26 @@
 import { createAdminClient, createAnonClient } from "../lib/supabase.js";
 import type {
   Registration,
-  RegistrationFormData,
   RegistrationStatus,
 } from "../types/database.js";
+
+export interface RegistrationInsertData {
+  name: string;
+  email: string;
+  phone: string;
+  passout_year_12th: string | null;
+  stream_12th: string | null;
+  college: string | null;
+  role: string | null;
+  linkedin: string | null;
+  city: string | null;
+  reason: string | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  utm_content: string | null;
+  form_responses: Record<string, string>;
+}
 
 export async function getRegistrationsByEvent(eventId: string) {
   const supabase = createAdminClient();
@@ -42,7 +59,7 @@ export async function getRegistrationByAttendeeId(attendeeId: string) {
 
 export async function createRegistration(
   eventId: string,
-  formData: RegistrationFormData,
+  formData: RegistrationInsertData,
   attendeeId: string,
   qrCode: string
 ) {
@@ -67,11 +84,18 @@ export async function createRegistration(
       name: formData.name,
       email: formData.email,
       phone: formData.phone,
+      passout_year_12th: formData.passout_year_12th,
+      stream_12th: formData.stream_12th,
       college: formData.college,
       role: formData.role,
       linkedin: formData.linkedin,
       city: formData.city,
       reason: formData.reason,
+      utm_source: formData.utm_source,
+      utm_medium: formData.utm_medium,
+      utm_campaign: formData.utm_campaign,
+      utm_content: formData.utm_content,
+      form_responses: formData.form_responses,
       qr_code: qrCode,
       status,
     })

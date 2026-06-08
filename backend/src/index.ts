@@ -38,9 +38,23 @@ import {
   sendThankYouEmail,
 } from "./services/email.service.js";
 import { generateAttendeeId } from "./lib/utils.js";
+import {
+  getEventFormFields,
+  validateRegistrationAnswers,
+  mergeUtmParams,
+} from "./lib/registration-fields.js";
+import {
+  getActiveEventTypes,
+  getAllEventTypesAdmin,
+  createEventType,
+  updateEventType,
+  deleteEventType,
+} from "./services/event-types.service.js";
 import { isSupabaseConfigured } from "./lib/env.js";
 import { getAppUrl } from "./lib/env.js";
 import { createAdminClient } from "./lib/supabase.js";
+import { uploadEventBanner } from "./services/storage.service.js";
+import { sanitizeEventPayload, formatDbError } from "./lib/event-payload.js";
 import type { Event, Registration, RegistrationStatus } from "./types/database.js";
 
 const app = express();
@@ -56,7 +70,16 @@ function getCorsOrigins(): string[] {
   if (process.env.RENDER_EXTERNAL_URL) origins.add(process.env.RENDER_EXTERNAL_URL.replace(/\/$/, ""));
   origins.add("http://localhost:3000");
   origins.add("http://127.0.0.1:3000");
+  origins.add("http://localhost:3001");
+  origins.add("http://localhost:3003");
   return Array.from(origins);
+}
+
+function isDevLocalOrigin(origin: string): boolean {
+  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)
+    || /^https?:\/\/(192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)(:\d+)?$/.test(
+      origin
+    );
 }
 
 app.use(
@@ -65,13 +88,24 @@ app.use(
       const allowed = getCorsOrigins();
       if (!origin || allowed.includes(origin) || allowed.includes("*")) {
         callback(null, true);
-      } else {
-        callback(null, allowed[0] ?? "http://localhost:3000");
+        return;
       }
+      if (process.env.NODE_ENV !== "production" && isDevLocalOrigin(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(new Error(`CORS blocked origin: ${origin}`));
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "Accept",
+      "Origin",
+      "X-File-Name",
+    ],
   })
 );
 app.use(express.json({ limit: "4mb" }));
@@ -113,49 +147,82 @@ app.get("/api/events/:slug", async (req, res) => {
   res.json({ event });
 });
 
+// ——— Event types (public) ———
+app.get("/api/event-types", async (_req, res) => {
+  try {
+    const eventTypes = await getActiveEventTypes();
+    res.json({ eventTypes });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Failed to fetch event types" });
+  }
+});
+
 // ——— Registration ———
 const registerSchema = z.object({
   eventId: z.string().uuid(),
   eventSlug: z.string(),
-  name: z.string().min(2),
-  email: z.string().email(),
-  phone: z.string().min(10),
-  college: z.string().min(2),
-  role: z.string().min(1),
-  linkedin: z.string().nullable().optional(),
-  city: z.string().min(2),
-  reason: z.string().min(10),
+  answers: z.record(z.string(), z.string()),
+  utm: z
+    .object({
+      utm_source: z.string().optional(),
+      utm_medium: z.string().optional(),
+      utm_campaign: z.string().optional(),
+      utm_content: z.string().optional(),
+    })
+    .optional(),
 });
 
 app.post("/api/register", async (req, res) => {
   try {
     const data = registerSchema.parse(req.body);
-    const existing = await checkExistingRegistration(data.eventId, data.email);
-    if (existing) {
-      res.status(409).json({ error: "You're already registered for this event" });
-      return;
-    }
-
     const event = await getEventByIdAdmin(data.eventId);
     if (!event || event.status !== "published") {
       res.status(404).json({ error: "Event not found" });
       return;
     }
 
+    const fields = getEventFormFields(event.registration_form_fields);
+    const validation = validateRegistrationAnswers(fields, data.answers);
+    if (!validation.valid) {
+      res.status(400).json({ error: validation.error });
+      return;
+    }
+
+    const email = validation.mapped.email!;
+    const existing = await checkExistingRegistration(data.eventId, email);
+    if (existing) {
+      res.status(409).json({ error: "You're already registered for this event" });
+      return;
+    }
+
     const attendeeId = generateAttendeeId(data.eventSlug);
     const qrCodeDataUrl = await generateQRCode(getQRData(attendeeId, data.eventId));
+
+    const utm = mergeUtmParams(data.utm || {}, {
+      utm_source: event.utm_source,
+      utm_medium: event.utm_medium,
+      utm_campaign: event.utm_campaign || event.slug,
+    });
 
     const registration = await createRegistration(
       data.eventId,
       {
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        college: data.college,
-        role: data.role,
-        linkedin: data.linkedin || "",
-        city: data.city,
-        reason: data.reason,
+        name: validation.mapped.name!,
+        email,
+        phone: validation.mapped.phone!,
+        passout_year_12th: validation.mapped.passout_year_12th,
+        stream_12th: validation.mapped.stream_12th,
+        college: validation.mapped.college,
+        role: validation.mapped.role,
+        linkedin: validation.mapped.linkedin,
+        city: validation.mapped.city,
+        reason: validation.mapped.reason,
+        utm_source: utm.utm_source ?? null,
+        utm_medium: utm.utm_medium ?? null,
+        utm_campaign: utm.utm_campaign ?? null,
+        utm_content: attendeeId,
+        form_responses: validation.formResponses,
       },
       attendeeId,
       qrCodeDataUrl
@@ -285,6 +352,66 @@ app.get("/api/admin/analytics/dashboard", requireAdmin, async (_req, res) => {
   }
 });
 
+// ——— Admin event types ———
+app.get("/api/admin/event-types", requireAdmin, async (_req, res) => {
+  const eventTypes = await getAllEventTypesAdmin();
+  res.json({ eventTypes });
+});
+
+app.post("/api/admin/event-types", requireAdmin, async (req, res) => {
+  try {
+    const eventType = await createEventType(req.body);
+    res.json({ eventType });
+  } catch (e) {
+    console.error(e);
+    res.status(400).json({ error: "Failed to create event type" });
+  }
+});
+
+app.put("/api/admin/event-types", requireAdmin, async (req, res) => {
+  try {
+    const { id, ...data } = req.body;
+    const eventType = await updateEventType(id, data);
+    res.json({ eventType });
+  } catch (e) {
+    console.error(e);
+    res.status(400).json({ error: "Failed to update event type" });
+  }
+});
+
+app.delete("/api/admin/event-types", requireAdmin, async (req, res) => {
+  try {
+    await deleteEventType(req.body.id);
+    res.json({ success: true });
+  } catch (e) {
+    console.error(e);
+    res.status(400).json({ error: "Failed to delete event type" });
+  }
+});
+
+// ——— Admin banner upload (binary body, service role → storage) ———
+app.post(
+  "/api/admin/upload/banner",
+  requireAdmin,
+  express.raw({ type: "*/*", limit: "6mb" }),
+  async (req, res) => {
+    try {
+      const buffer = Buffer.isBuffer(req.body)
+        ? req.body
+        : Buffer.from(req.body ?? []);
+      const filename = String(req.headers["x-file-name"] || "banner.jpg");
+      const contentType = req.headers["content-type"];
+      const url = await uploadEventBanner(buffer, filename, contentType);
+      res.json({ url });
+    } catch (e) {
+      console.error(e);
+      res.status(400).json({
+        error: e instanceof Error ? e.message : "Upload failed",
+      });
+    }
+  }
+);
+
 // ——— Admin events ———
 app.get("/api/admin/events", requireAdmin, async (_req, res) => {
   const events = await getAllEventsAdmin();
@@ -301,14 +428,30 @@ app.get("/api/admin/events/:id", requireAdmin, async (req, res) => {
 });
 
 app.post("/api/admin/events", requireAdmin, async (req, res) => {
-  const event = await createEvent(req.body);
-  res.json({ event });
+  try {
+    const event = await createEvent(sanitizeEventPayload(req.body));
+    res.json({ event });
+  } catch (e) {
+    console.error(e);
+    const err = e as { code?: string; message?: string };
+    res.status(400).json({ error: formatDbError(err) });
+  }
 });
 
 app.put("/api/admin/events", requireAdmin, async (req, res) => {
-  const { id, ...data } = req.body;
-  const event = await updateEvent(id, data);
-  res.json({ event });
+  try {
+    const { id, ...data } = req.body;
+    if (!id) {
+      res.status(400).json({ error: "Event id is required" });
+      return;
+    }
+    const event = await updateEvent(id, sanitizeEventPayload(data));
+    res.json({ event });
+  } catch (e) {
+    console.error(e);
+    const err = e as { code?: string; message?: string };
+    res.status(400).json({ error: formatDbError(err) });
+  }
 });
 
 app.delete("/api/admin/events", requireAdmin, async (req, res) => {
@@ -342,15 +485,40 @@ app.get("/api/admin/registrations/export", requireAdmin, async (req, res) => {
     res.status(400).json({ error: "eventId required" });
     return;
   }
+  const event = await getEventByIdAdmin(eventId);
   const registrations = await getRegistrationsByEvent(eventId);
+  const fields = getEventFormFields(event?.registration_form_fields);
+  const customFields = fields.filter((f) => !f.fieldKey);
+
   const headers = [
-    "Attendee ID", "Name", "Email", "Phone", "College", "Role",
-    "City", "LinkedIn", "Status", "WhatsApp Clicked", "Registered At",
+    "Attendee ID",
+    "Name",
+    "Email",
+    "Phone",
+    "12th Passout Year",
+    "12th Stream",
+    "UTM Source",
+    "UTM Medium",
+    "UTM Campaign",
+    "UTM Content",
+    "Status",
+    "Registered At",
+    ...customFields.map((f) => f.label),
   ];
   const rows = registrations.map((r) => [
-    r.attendee_id, r.name, r.email, r.phone, r.college || "", r.role || "",
-    r.city || "", r.linkedin || "", r.status,
-    r.whatsapp_clicked ? "Yes" : "No", r.created_at,
+    r.attendee_id,
+    r.name,
+    r.email,
+    r.phone,
+    r.passout_year_12th || "",
+    r.stream_12th || "",
+    r.utm_source || "",
+    r.utm_medium || "",
+    r.utm_campaign || "",
+    r.utm_content || "",
+    r.status,
+    r.created_at,
+    ...customFields.map((f) => (r.form_responses?.[f.id] ?? "")),
   ]);
   const csv = [headers, ...rows]
     .map((row) => row.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))

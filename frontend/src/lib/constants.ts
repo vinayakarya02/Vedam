@@ -1,12 +1,8 @@
 export const EVENT_TYPES = [
-  { value: "workshop", label: "Workshop" },
   { value: "webinar", label: "Webinar" },
-  { value: "hackathon", label: "Hackathon" },
   { value: "bootcamp", label: "AI Bootcamp" },
   { value: "masterclass", label: "Masterclass" },
-  { value: "meetup", label: "Community Meetup" },
-  { value: "career-session", label: "Career Session" },
-  { value: "demo-day", label: "Demo Day" },
+  { value: "meetup", label: "Seek your Seniors" },
   { value: "founder-talk", label: "Founder Talk" },
   { value: "campus-event", label: "Campus Event" },
 ] as const;

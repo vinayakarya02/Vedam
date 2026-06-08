@@ -6,10 +6,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, LogIn, LayoutDashboard, Plus } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
+import { VedamLogo } from "@/components/shared/vedam-logo";
 import { createClient } from "@/lib/supabase/client";
 const navLinks = [
   { href: "/events", label: "Events" },
-  { href: "/events?filter=upcoming", label: "Upcoming" },
   { href: "/#categories", label: "Categories" },
   { href: "/#faq", label: "FAQ" },
 ];
@@ -60,14 +60,8 @@ export function Header() {
     <header className="fixed top-0 left-0 right-0 z-50">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <nav className="mt-4 flex items-center gap-4 rounded-2xl glass px-4 sm:px-6 py-3">
-          <Link href="/" className="flex shrink-0 items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-vedam-orange to-vedam-purple">
-              <span className="text-sm font-bold text-white">V</span>
-            </div>
-            <div className="hidden sm:block">
-              <span className="font-semibold text-foreground">Vedam</span>
-              <span className="ml-1 text-muted-foreground text-sm">Events</span>
-            </div>
+          <Link href="/" className="flex shrink-0 items-center">
+            <VedamLogo size="lg" priority />
           </Link>
 
           <div className="hidden md:flex flex-1 items-center justify-center gap-8">

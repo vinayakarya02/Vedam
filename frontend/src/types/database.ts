@@ -35,6 +35,46 @@ export interface Testimonial {
   avatar?: string;
 }
 
+export type RegistrationFieldType =
+  | "text"
+  | "email"
+  | "phone"
+  | "textarea"
+  | "select"
+  | "number"
+  | "url";
+
+export interface RegistrationFormField {
+  id: string;
+  label: string;
+  type: RegistrationFieldType;
+  required: boolean;
+  placeholder?: string;
+  options?: string[];
+  fieldKey?:
+    | "name"
+    | "email"
+    | "phone"
+    | "passout_year_12th"
+    | "stream_12th"
+    | "college"
+    | "role"
+    | "linkedin"
+    | "city"
+    | "reason";
+}
+
+export interface EventType {
+  id: string;
+  slug: string;
+  label: string;
+  description: string | null;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface PageSection {
   id: string;
   type:
@@ -78,11 +118,15 @@ export interface Event {
   testimonials_data: Testimonial[];
   whatsapp_community_link: string | null;
   whatsapp_group_link: string | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
   is_featured: boolean;
   duration_minutes: number | null;
   status: EventStatus;
   meta_title: string | null;
   meta_description: string | null;
+  registration_form_fields?: RegistrationFormField[];
   created_at: string;
   updated_at: string;
 }
@@ -99,10 +143,17 @@ export interface Registration {
   linkedin: string | null;
   city: string | null;
   reason: string | null;
+  passout_year_12th: string | null;
+  stream_12th: string | null;
   qr_code: string | null;
   status: RegistrationStatus;
   whatsapp_clicked: boolean;
   whatsapp_clicked_at: string | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  utm_content: string | null;
+  form_responses?: Record<string, string>;
   created_at: string;
   events?: Event;
 }

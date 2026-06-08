@@ -1,7 +1,11 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { getEventBySlug, getPublishedEvents, getAppUrl } from "@/lib/api";
+import { getEventBySlug, getPublishedEvents, getAppUrl, getEventTypes } from "@/lib/api";
+import { eventTypesToLabelMap } from "@/lib/utils";
 import { DynamicEventPage } from "@/features/events/dynamic-event-page";
+
+export const dynamic = "force-dynamic";
+export const dynamicParams = true;
 
 interface EventPageProps {
   params: Promise<{ slug: string }>;
@@ -43,9 +47,14 @@ export async function generateMetadata({
 
 export default async function EventPage({ params }: EventPageProps) {
   const { slug } = await params;
-  const event = await getEventBySlug(slug);
+  const [event, eventTypes] = await Promise.all([
+    getEventBySlug(slug),
+    getEventTypes().catch(() => []),
+  ]);
 
   if (!event) notFound();
+
+  const typeLabels = eventTypesToLabelMap(eventTypes);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -82,7 +91,7 @@ export default async function EventPage({ params }: EventPageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <DynamicEventPage event={event} />
+      <DynamicEventPage event={event} typeLabels={typeLabels} />
     </>
   );
 }

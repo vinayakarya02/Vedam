@@ -10,24 +10,20 @@ import {
   Rocket,
   Users,
   Brain,
-  Trophy,
   Mic,
   GraduationCap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EventCard } from "@/components/events/event-card";
 import { SectionHeading } from "@/components/shared/section-heading";
+import { TestimonialsCarousel } from "@/components/home/testimonials-carousel";
 import type { Event } from "@/types/database";
 
 const categories = [
-  { icon: Code2, label: "Workshops", type: "workshop", color: "text-vedam-orange" },
   { icon: Brain, label: "AI Bootcamps", type: "bootcamp", color: "text-vedam-purple" },
-  { icon: Rocket, label: "Hackathons", type: "hackathon", color: "text-vedam-cyan" },
   { icon: Mic, label: "Founder Talks", type: "founder-talk", color: "text-vedam-orange" },
   { icon: GraduationCap, label: "Masterclasses", type: "masterclass", color: "text-vedam-purple" },
-  { icon: Users, label: "Meetups", type: "meetup", color: "text-vedam-cyan" },
-  { icon: Trophy, label: "Demo Days", type: "demo-day", color: "text-vedam-orange" },
-  { icon: Sparkles, label: "Career Sessions", type: "career-session", color: "text-vedam-purple" },
+  { icon: Users, label: "Seek your Seniors", type: "meetup", color: "text-vedam-cyan" },
 ];
 
 const whyAttend = [
@@ -55,19 +51,52 @@ const whyAttend = [
 
 const testimonials = [
   {
-    name: "Rahul S.",
-    role: "B.Tech Student, Vedam",
-    text: "The GenAI bootcamp changed my career trajectory. I built 3 AI projects and landed a startup internship.",
+    name: "Krishiv Mahajan",
+    role: "Vedam Student · LFX Mentorship",
+    achievement: "Global Linux Foundation Mentorship",
+    text: "Vedam pushed me to build in public from day one. That mindset led me to the global LFX Mentorship Program — something I never thought possible in my first year.",
   },
   {
-    name: "Ananya P.",
-    role: "Software Engineer",
-    text: "Vedam events are unlike anything else — premium quality, real learning, and an incredible network.",
+    name: "Muhammad Sharief",
+    role: "Vedam Student · HackerOne",
+    achievement: "Bug bounties in first year",
+    text: "The builder culture here isn't theory-first. I was shipping code, joining hackathons, and earning on HackerOne while still in my first semester.",
   },
   {
-    name: "Vikram K.",
-    role: "Startup Founder",
-    text: "The founder talks gave me actionable insights. Vedam truly understands the builder mindset.",
+    name: "Shubham Barik",
+    role: "Vedam Student · Intern at Dues Innovation",
+    achievement: "First-year tech internship",
+    text: "I landed my first tech internship in year one because Vedam treats students like engineers, not just learners. The events and community opened real doors.",
+  },
+  {
+    name: "Khushi Yadav",
+    role: "Vedam Student · Intern at Alchemyst AI",
+    achievement: "AI startup internship",
+    text: "From AI bootcamps to founder talks, Vedam events connected me with people building real products. That network got me into Alchemyst AI.",
+  },
+  {
+    name: "Divya Chopra",
+    role: "Software Engineer II, Google",
+    achievement: "Google · MAANG mentor network",
+    text: "I loved the way this coding course was structured. He started with the basics and then gradually built on our knowledge. Plenty of practice exercises made it easy to learn and retain.",
+  },
+  {
+    name: "Pranjal Sharma",
+    role: "SDE I, Amazon",
+    achievement: "Amazon · Vedam mentor alumni",
+    text: "I wasted countless hours on DSA resources before landing under the guidance of a mentor. He is an experienced teacher and one who makes learning a delightful experience.",
+  },
+  {
+    name: "Piyush Nangru",
+    role: "Co-founder, Vedam School of Technology",
+    achievement: "Series C ed-tech entrepreneur",
+    text: "At Vedam, future graduates are shaped by building, not just studying. Events are where that builder mindset comes alive — ship products, meet founders, grow fast.",
+  },
+  {
+    name: "Subhesh Kumar",
+    role: "Academic Head, Vedam · Ex-Google",
+    achievement: "Ex-Google · 5-Star Coder",
+    text: "We designed Vedam for people who want to ship. When builders come together at our events, that's the culture in action — hands-on, current, and industry-aligned.",
   },
 ];
 
@@ -138,7 +167,7 @@ function HeroSection({ highlightEvent }: { highlightEvent?: Event }) {
             </h1>
 
             <p className="text-xl text-muted-foreground mb-8 max-w-lg leading-relaxed">
-              Premium workshops, AI bootcamps, hackathons, and founder talks.
+              Premium AI bootcamps, masterclasses, founder talks, and Seek your Seniors sessions.
               Join India&apos;s most ambitious builder community.
             </p>
 
@@ -312,26 +341,17 @@ function PastEventsSection({ events }: { events: Event[] }) {
 
 function TestimonialsSection() {
   return (
-    <section className="py-20 bg-white/[0.02]">
+    <section className="py-20 bg-white/[0.02] overflow-hidden">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionHeading badge="Community" title="What Builders Say" />
-        <div className="grid sm:grid-cols-3 gap-6">
-          {testimonials.map((t, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className="glass-card p-6"
-            >
-              <p className="text-muted-foreground mb-4 italic">&ldquo;{t.text}&rdquo;</p>
-              <div>
-                <div className="font-medium text-sm">{t.name}</div>
-                <div className="text-xs text-muted-foreground">{t.role}</div>
-              </div>
-            </motion.div>
-          ))}
+        <SectionHeading
+          badge="Community"
+          title="What Builders Say"
+          subtitle="Engineers, founders, and Vedam students who ship real products"
+        />
+        <div className="relative -mx-4 sm:-mx-6 lg:-mx-8">
+          <div className="pointer-events-none absolute left-0 top-0 bottom-0 z-10 w-8 sm:w-16 bg-gradient-to-r from-background to-transparent" />
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 z-10 w-8 sm:w-16 bg-gradient-to-l from-background to-transparent" />
+          <TestimonialsCarousel testimonials={testimonials} />
         </div>
       </div>
     </section>

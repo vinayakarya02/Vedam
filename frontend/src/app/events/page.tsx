@@ -1,13 +1,14 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { getPublishedEvents } from "@/lib/api";
+import { getPublishedEvents, getEventTypes } from "@/lib/api";
+import { eventTypesToLabelMap } from "@/lib/utils";
 import { EventsListing } from "@/features/events/events-listing";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const metadata: Metadata = {
   title: "All Events",
   description:
-    "Browse upcoming workshops, AI bootcamps, hackathons, and masterclasses by Vedam School of Technology.",
+    "Browse upcoming AI bootcamps, masterclasses, founder talks, and Seek your Seniors sessions by Vedam School of Technology.",
 };
 
 interface EventsPageProps {
@@ -21,7 +22,11 @@ interface EventsPageProps {
 export default async function EventsPage({ searchParams }: EventsPageProps) {
   const params = await searchParams;
 
-  const allEvents = await getPublishedEvents().catch(() => []);
+  const [allEvents, eventTypes] = await Promise.all([
+    getPublishedEvents().catch(() => []),
+    getEventTypes().catch(() => []),
+  ]);
+  const typeLabels = eventTypesToLabelMap(eventTypes);
 
   return (
     <div className="pt-24 pb-20">
@@ -31,7 +36,7 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
             Explore <span className="gradient-text">Events</span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl">
-            Workshops, bootcamps, hackathons, founder talks, and more.
+            AI bootcamps, masterclasses, founder talks, Seek your Seniors, and more.
             Find your next learning adventure.
           </p>
         </div>
@@ -39,6 +44,7 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
         <Suspense fallback={<EventsListingSkeleton />}>
           <EventsListing
             events={allEvents}
+            typeLabels={typeLabels}
             initialFilter={params.filter}
             initialType={params.type}
             initialSearch={params.search}

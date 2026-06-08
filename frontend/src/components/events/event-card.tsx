@@ -17,9 +17,10 @@ import {
 interface EventCardProps {
   event: Event;
   index?: number;
+  typeLabels?: Record<string, string>;
 }
 
-export function EventCard({ event, index = 0 }: EventCardProps) {
+export function EventCard({ event, index = 0, typeLabels }: EventCardProps) {
   const seatsLeft = getSeatsLeft(event.seats, event.registrations_count);
   const isFull = seatsLeft === 0;
 
@@ -44,7 +45,9 @@ export function EventCard({ event, index = 0 }: EventCardProps) {
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
         <div className="absolute top-4 left-4 flex gap-2">
-          <Badge variant="default">{getEventTypeLabel(event.event_type)}</Badge>
+          <Badge variant="default">
+            {getEventTypeLabel(event.event_type, typeLabels)}
+          </Badge>
           {event.is_featured && <Badge variant="purple">Featured</Badge>}
         </div>
       </div>
