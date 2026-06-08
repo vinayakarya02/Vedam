@@ -111,6 +111,21 @@ export function RegistrationSuccess() {
         You&apos;re registered for <strong>{event.title}</strong>
       </p>
 
+      <div className="glass rounded-xl p-4 mb-6 text-left space-y-3 text-sm">
+        <p className="font-semibold text-foreground">
+          Thank You for Registering!
+        </p>
+        <p className="text-muted-foreground">
+          Your seat for <strong>{event.title}</strong> is confirmed.
+        </p>
+        <p className="text-muted-foreground">
+          Join our WhatsApp Community to receive bootcamp updates, session
+          reminders, resources, future event announcements, and valuable
+          insights on B.Tech in CS (AI).
+        </p>
+        <p className="text-muted-foreground">See you at the bootcamp!</p>
+      </div>
+
       <div className="glass rounded-xl p-4 mb-6 text-left space-y-2 text-sm">
         <h3 className="font-semibold text-vedam-orange text-xs uppercase tracking-wide mb-3">
           Your registration details
