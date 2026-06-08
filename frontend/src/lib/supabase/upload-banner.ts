@@ -1,18 +1,26 @@
 import { clientApiUpload } from "@/lib/api-client";
 
 const MAX_SIZE_MB = 5;
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
+// Fallback map for browsers/OSes that don't set file.type (any image extension).
 const MIME_BY_EXT: Record<string, string> = {
   jpg: "image/jpeg",
   jpeg: "image/jpeg",
   png: "image/png",
   webp: "image/webp",
   gif: "image/gif",
+  svg: "image/svg+xml",
+  avif: "image/avif",
+  bmp: "image/bmp",
+  tif: "image/tiff",
+  tiff: "image/tiff",
+  ico: "image/x-icon",
+  heic: "image/heic",
+  heif: "image/heif",
 };
 
 function inferMimeType(file: File): string {
-  if (file.type && ALLOWED_TYPES.includes(file.type)) return file.type;
+  if (file.type && file.type.startsWith("image/")) return file.type;
   const ext = file.name.split(".").pop()?.toLowerCase() || "";
   return MIME_BY_EXT[ext] || "";
 }
@@ -20,7 +28,7 @@ function inferMimeType(file: File): string {
 export async function uploadEventBanner(file: File): Promise<string> {
   const mimeType = inferMimeType(file);
   if (!mimeType) {
-    throw new Error("Please upload a JPG, PNG, WebP, or GIF image");
+    throw new Error("Please upload an image file");
   }
   if (file.size > MAX_SIZE_MB * 1024 * 1024) {
     throw new Error(`Image must be under ${MAX_SIZE_MB}MB`);

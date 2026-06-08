@@ -32,7 +32,7 @@ export function BannerUpload({ value, onChange }: BannerUploadProps) {
 
   return (
     <div className="space-y-2 md:col-span-2">
-      <Label>Event Banner *</Label>
+      <Label>Event Banner</Label>
       <div className="flex flex-col sm:flex-row gap-4">
         {value ? (
           <div className="relative w-full sm:w-48 h-28 rounded-lg overflow-hidden border border-white/10 shrink-0">
@@ -60,7 +60,7 @@ export function BannerUpload({ value, onChange }: BannerUploadProps) {
           <input
             ref={inputRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
+            accept="image/*"
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0];
@@ -81,7 +81,7 @@ export function BannerUpload({ value, onChange }: BannerUploadProps) {
             {uploading ? "Uploading..." : value ? "Replace image" : "Upload image"}
           </Button>
           <p className="text-xs text-muted-foreground">
-            JPG, PNG, WebP or GIF · max 5MB
+            Any image format · max 5MB
           </p>
           {error && <p className="text-xs text-destructive">{error}</p>}
         </div>

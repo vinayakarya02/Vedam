@@ -3,26 +3,36 @@ import { createAdminClient } from "../lib/supabase.js";
 const BUCKET = "event-banners";
 const MAX_BYTES = 5 * 1024 * 1024;
 
-const EXT_BY_MIME: Record<string, string> = {
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-  "image/gif": "gif",
-};
-
 const MIME_BY_EXT: Record<string, string> = {
   jpg: "image/jpeg",
   jpeg: "image/jpeg",
   png: "image/png",
   webp: "image/webp",
   gif: "image/gif",
+  svg: "image/svg+xml",
+  avif: "image/avif",
+  bmp: "image/bmp",
+  tif: "image/tiff",
+  tiff: "image/tiff",
+  ico: "image/x-icon",
+  heic: "image/heic",
+  heif: "image/heif",
 };
 
 function inferMimeType(filename: string, contentType?: string): string {
   const normalized = contentType?.split(";")[0]?.trim().toLowerCase();
-  if (normalized && EXT_BY_MIME[normalized]) return normalized;
+  if (normalized && normalized.startsWith("image/")) return normalized;
   const ext = filename.split(".").pop()?.toLowerCase() || "";
-  return MIME_BY_EXT[ext] || "image/jpeg";
+  return MIME_BY_EXT[ext] || "";
+}
+
+// Derive a storage file extension from the mime subtype (e.g. image/svg+xml -> svg)
+// or the original filename, falling back to "img".
+function extFromMime(mimeType: string, filename: string): string {
+  const fromName = filename.split(".").pop()?.toLowerCase();
+  if (fromName && /^[a-z0-9]+$/.test(fromName)) return fromName;
+  const sub = mimeType.split("/")[1]?.split("+")[0];
+  return sub && /^[a-z0-9]+$/.test(sub) ? sub : "img";
 }
 
 async function ensureBannerBucket() {
@@ -50,13 +60,13 @@ export async function uploadEventBanner(
   if (buffer.length > MAX_BYTES) throw new Error("Image must be under 5MB");
 
   const mimeType = inferMimeType(filename, contentType);
-  if (!EXT_BY_MIME[mimeType]) {
-    throw new Error("Please upload a JPG, PNG, WebP, or GIF image");
+  if (!mimeType.startsWith("image/")) {
+    throw new Error("Please upload an image file");
   }
 
   await ensureBannerBucket();
 
-  const ext = EXT_BY_MIME[mimeType];
+  const ext = extFromMime(mimeType, filename);
   const path = `events/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
   const supabase = createAdminClient();
 

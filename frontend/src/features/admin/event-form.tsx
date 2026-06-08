@@ -133,12 +133,6 @@ export function EventForm({ event }: EventFormProps) {
     setLoading(true);
 
     try {
-      if (!form.banner_url) {
-        alert("Please upload an event banner");
-        setLoading(false);
-        return;
-      }
-
       const payload = {
         ...form,
         whatsapp_group_link: null,
