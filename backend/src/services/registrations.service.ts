@@ -1,4 +1,4 @@
-import { createAdminClient, createAnonClient } from "../lib/supabase.js";
+import { createAdminClient } from "../lib/supabase.js";
 import type {
   Registration,
   RegistrationStatus,
@@ -167,13 +167,17 @@ export async function trackWhatsAppClick(registrationId: string) {
 }
 
 export async function checkExistingRegistration(eventId: string, email: string) {
-  const supabase = createAnonClient();
+  // Must use the admin (service-role) client: RLS has no public SELECT policy
+  // on registrations, so the anon client always sees zero rows and the
+  // duplicate check would silently pass — letting the insert hit the
+  // UNIQUE(event_id, email) constraint and throw a 500 instead of a clean 409.
+  const supabase = createAdminClient();
   const { data } = await supabase
     .from("registrations")
     .select("id, attendee_id")
     .eq("event_id", eventId)
     .eq("email", email)
-    .single();
+    .maybeSingle();
 
   return data;
 }
