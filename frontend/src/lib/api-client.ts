@@ -19,20 +19,51 @@ async function getAdminAuthHeaders(
   };
 }
 
-/** Client-side fetch with admin auth token */
+// Backoff delays (ms) used to ride out a free-tier backend cold start
+// (~50s) or a brief redeploy, instead of surfacing a transient failure.
+const RETRY_DELAYS_MS = [2000, 5000, 10000, 15000, 20000];
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Client-side fetch with admin auth token; retries transient infra errors */
 export async function clientApiFetch(
   path: string,
   init?: RequestInit
 ): Promise<Response> {
   const isFormData = init?.body instanceof FormData;
-
-  return fetch(`${getApiUrl()}${path}`, {
-    ...init,
-    headers: await getAdminAuthHeaders({
-      ...(isFormData ? {} : { "Content-Type": "application/json" }),
-      ...init?.headers,
-    }),
+  const headers = await getAdminAuthHeaders({
+    ...(isFormData ? {} : { "Content-Type": "application/json" }),
+    ...init?.headers,
   });
+
+  const url = `${getApiUrl()}${path}`;
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
+    try {
+      const res = await fetch(url, { ...init, headers });
+      // Retry only transient infra responses (cold start / redeploy / gateway).
+      if (
+        [500, 502, 503, 504].includes(res.status) &&
+        attempt < RETRY_DELAYS_MS.length
+      ) {
+        await sleep(RETRY_DELAYS_MS[attempt]);
+        continue;
+      }
+      return res;
+    } catch (err) {
+      // Network error (backend unreachable while waking) — retry.
+      lastError = err;
+      if (attempt < RETRY_DELAYS_MS.length) {
+        await sleep(RETRY_DELAYS_MS[attempt]);
+        continue;
+      }
+      throw lastError;
+    }
+  }
+
+  // Unreachable, but satisfies the type checker.
+  throw lastError ?? new Error("Request failed");
 }
 
 /** Upload a file (raw body) with admin auth — for banner uploads */
