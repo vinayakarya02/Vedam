@@ -156,15 +156,14 @@ function HeroSection({
               initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6 }}
-              className="order-1 lg:order-2 relative aspect-video lg:aspect-[4/5] w-full rounded-2xl overflow-hidden border border-white/10 shadow-2xl"
+              className="order-1 lg:order-2"
             >
-              <Image
+              {/* Show the full banner at its natural aspect ratio (no cropping). */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src={event.banner_url}
                 alt={event.title}
-                fill
-                className="object-cover"
-                priority
-                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="w-full h-auto rounded-2xl border border-white/10 shadow-2xl"
               />
             </motion.div>
           )}
