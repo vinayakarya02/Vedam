@@ -106,61 +106,69 @@ function HeroSection({
   typeLabels?: Record<string, string>;
 }) {
   return (
-    <section className="relative min-h-[70vh] flex items-end">
-      <div className="absolute inset-0">
-        {event.banner_url && (
-          <Image
-            src={event.banner_url}
-            alt={event.title}
-            fill
-            className="object-cover"
-            priority
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/30" />
-      </div>
+    <section className="relative pt-32 pb-16">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className={`grid gap-10 lg:gap-12 items-center ${event.banner_url ? "lg:grid-cols-2" : ""}`}>
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="order-2 lg:order-1"
+          >
+            <div className="flex flex-wrap gap-2 mb-6">
+              <Badge>{getEventTypeLabel(event.event_type, typeLabels)}</Badge>
+              <Badge variant="secondary">{getModeLabel(event.mode)}</Badge>
+              {event.is_featured && <Badge variant="purple">Featured</Badge>}
+            </div>
 
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-16 pt-32 w-full">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <div className="flex flex-wrap gap-2 mb-6">
-            <Badge>{getEventTypeLabel(event.event_type, typeLabels)}</Badge>
-            <Badge variant="secondary">{getModeLabel(event.mode)}</Badge>
-            {event.is_featured && <Badge variant="purple">Featured</Badge>}
-          </div>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-4">
+              {event.title}
+            </h1>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-4 max-w-4xl">
-            {event.title}
-          </h1>
-
-          {event.tagline && (
-            <p className="text-xl text-muted-foreground mb-8 max-w-2xl">
-              {event.tagline}
-            </p>
-          )}
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-            <InfoPill icon={Calendar} label="Date" value={formatDate(event.start_date, { weekday: "short", month: "short", day: "numeric", year: "numeric" })} />
-            <InfoPill icon={Clock} label="Time" value={formatTime(event.start_date)} />
-            {event.duration_minutes && (
-              <InfoPill icon={Clock} label="Duration" value={formatDuration(event.duration_minutes)} />
+            {event.tagline && (
+              <p className="text-xl text-muted-foreground mb-8">
+                {event.tagline}
+              </p>
             )}
-            <InfoPill icon={MapPin} label="Venue" value={event.venue || getModeLabel(event.mode)} />
-            <InfoPill
-              icon={Users}
-              label="Seats"
-              value={seatsLeft > 0 ? `${seatsLeft} left` : "Waitlist"}
-              highlight={seatsLeft <= 10 && seatsLeft > 0}
-            />
-          </div>
 
-          <Button size="xl" asChild className="glow-orange">
-            <a href="#register">Register Now</a>
-          </Button>
-        </motion.div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
+              <InfoPill icon={Calendar} label="Date" value={formatDate(event.start_date, { weekday: "short", month: "short", day: "numeric", year: "numeric" })} />
+              <InfoPill icon={Clock} label="Time" value={formatTime(event.start_date)} />
+              {event.duration_minutes && (
+                <InfoPill icon={Clock} label="Duration" value={formatDuration(event.duration_minutes)} />
+              )}
+              <InfoPill icon={MapPin} label="Venue" value={event.venue || getModeLabel(event.mode)} />
+              <InfoPill
+                icon={Users}
+                label="Seats"
+                value={seatsLeft > 0 ? `${seatsLeft} left` : "Waitlist"}
+                highlight={seatsLeft <= 10 && seatsLeft > 0}
+              />
+            </div>
+
+            <Button size="xl" asChild className="glow-orange">
+              <a href="#register">Register Now</a>
+            </Button>
+          </motion.div>
+
+          {event.banner_url && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6 }}
+              className="order-1 lg:order-2 relative aspect-video lg:aspect-[4/5] w-full rounded-2xl overflow-hidden border border-white/10 shadow-2xl"
+            >
+              <Image
+                src={event.banner_url}
+                alt={event.title}
+                fill
+                className="object-cover"
+                priority
+                sizes="(max-width: 1024px) 100vw, 50vw"
+              />
+            </motion.div>
+          )}
+        </div>
       </div>
     </section>
   );
