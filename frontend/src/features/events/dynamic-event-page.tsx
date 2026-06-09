@@ -10,6 +10,9 @@ import {
   Users,
   Linkedin,
   CheckCircle,
+  GraduationCap,
+  Gift,
+  Check,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -196,6 +199,21 @@ function InfoPill({
 }
 
 function AboutSection({ event }: { event: Event }) {
+  const cards = [
+    {
+      title: "Learning Outcomes",
+      items: event.learning_outcomes ?? [],
+      icon: GraduationCap,
+      orange: true,
+    },
+    {
+      title: "What You Get",
+      items: event.benefits ?? [],
+      icon: Gift,
+      orange: false,
+    },
+  ].filter((c) => c.items.length > 0);
+
   return (
     <section className="py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -206,32 +224,61 @@ function AboutSection({ event }: { event: Event }) {
           </p>
         )}
         <div className="grid md:grid-cols-2 gap-8">
-          {event.learning_outcomes?.length > 0 && (
-            <div className="glass-card p-8">
-              <h3 className="text-xl font-semibold mb-6">Learning Outcomes</h3>
-              <ul className="space-y-4">
-                {event.learning_outcomes.map((outcome, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <CheckCircle className="h-5 w-5 text-vedam-orange shrink-0 mt-0.5" />
-                    <span className="text-muted-foreground">{outcome}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {event.benefits?.length > 0 && (
-            <div className="glass-card p-8">
-              <h3 className="text-xl font-semibold mb-6">What You Get</h3>
-              <ul className="space-y-4">
-                {event.benefits.map((benefit, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <CheckCircle className="h-5 w-5 text-vedam-purple shrink-0 mt-0.5" />
-                    <span className="text-muted-foreground">{benefit}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          {cards.map((card, ci) => (
+            <motion.div
+              key={card.title}
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: ci * 0.1 }}
+              className={`group relative glass-card p-8 overflow-hidden transition-all duration-300 hover:-translate-y-1 ${
+                card.orange
+                  ? "hover:border-vedam-orange/30"
+                  : "hover:border-vedam-purple/30"
+              }`}
+            >
+              <div
+                className={`pointer-events-none absolute -top-24 -right-24 h-48 w-48 rounded-full blur-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100 ${
+                  card.orange ? "bg-vedam-orange/20" : "bg-vedam-purple/20"
+                }`}
+              />
+              <div className="relative">
+                <div className="flex items-center gap-3 mb-6">
+                  <div
+                    className={`flex h-11 w-11 items-center justify-center rounded-xl ${
+                      card.orange
+                        ? "bg-vedam-orange/10 text-vedam-orange"
+                        : "bg-vedam-purple/10 text-vedam-purple"
+                    }`}
+                  >
+                    <card.icon className="h-5 w-5" />
+                  </div>
+                  <h3 className="text-xl font-semibold">{card.title}</h3>
+                </div>
+                <ul className="space-y-1">
+                  {card.items.map((item, i) => (
+                    <li
+                      key={i}
+                      className="flex items-start gap-3 rounded-lg -mx-2 p-2 transition-colors hover:bg-white/[0.03]"
+                    >
+                      <span
+                        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
+                          card.orange
+                            ? "bg-vedam-orange/15 text-vedam-orange"
+                            : "bg-vedam-purple/15 text-vedam-purple"
+                        }`}
+                      >
+                        <Check className="h-3 w-3" />
+                      </span>
+                      <span className="text-muted-foreground leading-relaxed">
+                        {item}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </motion.div>
+          ))}
         </div>
       </div>
     </section>
