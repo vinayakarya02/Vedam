@@ -94,7 +94,13 @@ app.use(
         callback(null, true);
         return;
       }
-      callback(new Error(`CORS blocked origin: ${origin}`));
+      // Deny gracefully: withhold CORS headers but DO NOT throw. Throwing turns
+      // into a 500 that breaks same-origin requests proxied through the Next.js
+      // rewrite (e.g. a custom domain like events.vedam.org, whose forwarded
+      // Origin isn't in the allowlist). A genuine cross-origin browser request
+      // from a disallowed origin is still blocked client-side by the missing
+      // Access-Control-Allow-Origin header.
+      callback(null, false);
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
