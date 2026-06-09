@@ -1,5 +1,6 @@
-import { clientApiUpload } from "@/lib/api-client";
+import { createClient } from "@/lib/supabase/client";
 
+const BUCKET = "event-banners";
 const MAX_SIZE_MB = 5;
 
 // Fallback map for browsers/OSes that don't set file.type (any image extension).
@@ -25,6 +26,19 @@ function inferMimeType(file: File): string {
   return MIME_BY_EXT[ext] || "";
 }
 
+function fileExtension(file: File, mimeType: string): string {
+  const fromName = file.name.split(".").pop()?.toLowerCase();
+  if (fromName && /^[a-z0-9]+$/.test(fromName)) return fromName;
+  const sub = mimeType.split("/")[1]?.split("+")[0];
+  return sub && /^[a-z0-9]+$/.test(sub) ? sub : "img";
+}
+
+/**
+ * Upload a banner straight to Supabase Storage from the browser using the
+ * admin's authenticated session. This avoids proxying a multi-MB binary
+ * through the Next.js rewrite + backend (which was failing on Render), and
+ * relies on the "Admins upload banners" storage RLS policy.
+ */
 export async function uploadEventBanner(file: File): Promise<string> {
   const mimeType = inferMimeType(file);
   if (!mimeType) {
@@ -34,25 +48,24 @@ export async function uploadEventBanner(file: File): Promise<string> {
     throw new Error(`Image must be under ${MAX_SIZE_MB}MB`);
   }
 
-  let res: Response;
-  try {
-    res = await clientApiUpload("/api/admin/upload/banner", file, mimeType);
-  } catch {
-    throw new Error(
-      "Cannot reach the API. From the project root run `npm run dev` (backend on port 4000 + frontend on 3000), then reload this page."
-    );
-  }
-  const data = await res.json().catch(() => ({}));
+  const supabase = createClient();
+  const ext = fileExtension(file, mimeType);
+  const path = `events/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-  if (!res.ok) {
-    throw new Error(
-      typeof data.error === "string" ? data.error : "Upload failed"
-    );
+  const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
+    contentType: mimeType,
+    cacheControl: "3600",
+    upsert: false,
+  });
+
+  if (error) {
+    throw new Error(error.message || "Upload failed");
   }
 
-  if (!data.url || typeof data.url !== "string") {
-    throw new Error("Invalid response from server");
+  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
+  if (!data.publicUrl) {
+    throw new Error("Could not get image URL");
   }
 
-  return data.url;
+  return data.publicUrl;
 }
