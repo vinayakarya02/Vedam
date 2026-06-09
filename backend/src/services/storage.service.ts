@@ -35,12 +35,21 @@ function extFromMime(mimeType: string, filename: string): string {
   return sub && /^[a-z0-9]+$/.test(sub) ? sub : "img";
 }
 
+// Once verified/created, skip the per-upload listBuckets call — it's an extra
+// Supabase request on every upload that contributes to rate limiting (429).
+let bucketReady = false;
+
 async function ensureBannerBucket() {
+  if (bucketReady) return;
+
   const supabase = createAdminClient();
   const { data: buckets, error: listError } = await supabase.storage.listBuckets();
   if (listError) throw new Error(listError.message);
 
-  if (buckets?.some((b) => b.name === BUCKET || b.id === BUCKET)) return;
+  if (buckets?.some((b) => b.name === BUCKET || b.id === BUCKET)) {
+    bucketReady = true;
+    return;
+  }
 
   const { error: createError } = await supabase.storage.createBucket(BUCKET, {
     public: true,
@@ -49,6 +58,7 @@ async function ensureBannerBucket() {
   if (createError && !createError.message.includes("already exists")) {
     throw new Error(createError.message);
   }
+  bucketReady = true;
 }
 
 export async function uploadEventBanner(
