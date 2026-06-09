@@ -75,11 +75,18 @@ export const FORM_FIELD_TYPES = [
   { value: "url", label: "URL" },
 ] as const;
 
+// Built-in fields that were dropped from registration; strip them from
+// previously-saved events so they no longer render or validate.
+const DEPRECATED_FIELD_KEYS = new Set(["college", "role", "linkedin", "reason"]);
+
 export function getEventFormFields(
   fields: RegistrationFormField[] | null | undefined
 ): RegistrationFormField[] {
-  if (fields && fields.length > 0) return fields;
-  return DEFAULT_REGISTRATION_FORM_FIELDS;
+  const source =
+    fields && fields.length > 0 ? fields : DEFAULT_REGISTRATION_FORM_FIELDS;
+  return source.filter(
+    (f) => !f.fieldKey || !DEPRECATED_FIELD_KEYS.has(f.fieldKey)
+  );
 }
 
 export function createEmptyFormField(order: number): RegistrationFormField {
