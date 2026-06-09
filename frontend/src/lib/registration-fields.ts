@@ -63,38 +63,6 @@ export const DEFAULT_REGISTRATION_FORM_FIELDS: RegistrationFormField[] = [
     fieldKey: "city",
     placeholder: "Hyderabad",
   },
-  {
-    id: "college",
-    label: "College / Company",
-    type: "text",
-    required: true,
-    fieldKey: "college",
-    placeholder: "Vedam School of Technology",
-  },
-  {
-    id: "role",
-    label: "Current Year / Role",
-    type: "text",
-    required: true,
-    fieldKey: "role",
-    placeholder: "2nd Year B.Tech",
-  },
-  {
-    id: "linkedin",
-    label: "LinkedIn Profile",
-    type: "url",
-    required: false,
-    fieldKey: "linkedin",
-    placeholder: "https://linkedin.com/in/johndoe",
-  },
-  {
-    id: "reason",
-    label: "Why do you want to attend?",
-    type: "textarea",
-    required: true,
-    fieldKey: "reason",
-    placeholder: "Tell us about your goals and what you hope to learn...",
-  },
 ];
 
 export const FORM_FIELD_TYPES = [
