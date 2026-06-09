@@ -19,13 +19,16 @@ async function getAdminAuthHeaders(
   };
 }
 
-// Backoff delays (ms) used to ride out a free-tier backend cold start
-// (~50s) or a brief redeploy, instead of surfacing a transient failure.
-const RETRY_DELAYS_MS = [2000, 5000, 10000, 15000, 20000];
+// Gentle backoff to ride out a brief cold start / redeploy without bursting
+// (which can trip an edge rate limit). Only a couple of attempts, and only for
+// clear gateway/network failures — never for 429 (rate limited) or 500 (app
+// error), which retrying would only make worse.
+const RETRY_DELAYS_MS = [1500, 4000];
+const RETRYABLE_STATUS = new Set([502, 503, 504]);
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-/** Client-side fetch with admin auth token; retries transient infra errors */
+/** Client-side fetch with admin auth token; retries transient gateway errors */
 export async function clientApiFetch(
   path: string,
   init?: RequestInit
@@ -42,17 +45,12 @@ export async function clientApiFetch(
   for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
     try {
       const res = await fetch(url, { ...init, headers });
-      // Retry only transient infra responses (cold start / redeploy / gateway).
-      if (
-        [500, 502, 503, 504].includes(res.status) &&
-        attempt < RETRY_DELAYS_MS.length
-      ) {
+      if (RETRYABLE_STATUS.has(res.status) && attempt < RETRY_DELAYS_MS.length) {
         await sleep(RETRY_DELAYS_MS[attempt]);
         continue;
       }
       return res;
     } catch (err) {
-      // Network error (backend unreachable while waking) — retry.
       lastError = err;
       if (attempt < RETRY_DELAYS_MS.length) {
         await sleep(RETRY_DELAYS_MS[attempt]);
@@ -62,7 +60,6 @@ export async function clientApiFetch(
     }
   }
 
-  // Unreachable, but satisfies the type checker.
   throw lastError ?? new Error("Request failed");
 }
 
